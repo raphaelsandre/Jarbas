@@ -1,0 +1,6 @@
+[project]
+name = "jarbas"
+version = "0.1.0"
+description = "Jarbas Automation Core"
+requires-python = ">=3.12"
+dependencies = ["fastapi", "uvicorn[standard]", "pydantic-settings"]

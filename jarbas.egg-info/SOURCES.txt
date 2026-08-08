@@ -1,0 +1,6 @@
+pyproject.toml
+jarbas.egg-info/PKG-INFO
+jarbas.egg-info/SOURCES.txt
+jarbas.egg-info/dependency_links.txt
+jarbas.egg-info/requires.txt
+jarbas.egg-info/top_level.txt
