@@ -59,9 +59,12 @@ tmp/
 temp/
 cache/
 .cache/
+*.lock
 
 # Databases
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 

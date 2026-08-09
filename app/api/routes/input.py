@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-from pydoc import text
 from typing import Any
 from fastapi import Request, APIRouter, HTTPException, Depends
 from starlette.datastructures import UploadFile
-
+from app.context.short_term import add_context, get_context
 from app.providers.speech.faster_whisper import FasterWhisperProvider
 from app.thinking.engine import think
 from app.security.auth import authenticate_request
@@ -87,5 +86,16 @@ async def input_gateway(request: Request):
         raise HTTPException(
             status_code=400, detail="Nenhuma entrada pode ser utilizada"
         )
-    thought = await think(text)
-    return thought
+    context = await get_context()
+    thought = await think(
+        text=text,
+        context=context,
+    )
+    await add_context(
+        user_input=text,
+        jarbas_output=thought
+    )
+    return {
+        "input": text,
+        "thought": thought,
+    }
