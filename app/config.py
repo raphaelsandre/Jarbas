@@ -1,13 +1,11 @@
 from pydantic_settings import BaseSettings
 
-
 class Settings(BaseSettings):
     jarbas_name: str
     jarbas_version: str
     environment: str
+    ollama_url: str
 
     class Config:
-        env_file = ".env"
-
-
+        env_file = "../.env"
 settings = Settings()
