@@ -4,7 +4,8 @@ from app.context.short_term import add_context, get_context
 from app.providers.speech.faster_whisper import FasterWhisperProvider
 from app.thinking.engine import think
 from app.security.auth import authenticate_request
-
+from app.observer.hermes import observe
+from uuid import uuid4
 
 speech = FasterWhisperProvider()
 
@@ -29,6 +30,10 @@ async def input_gateway(request: Request):
             status_code=400, detail="Nenhuma entrada pode ser utilizada"
         )
     context = await get_context()
+    await observe(
+        request_id=uuid4().hex,
+        text=text
+    )
     thought = await think(
         text=text,
         context=context,
