@@ -1,9 +1,10 @@
 import httpx
 from app.config import settings
+
 OLLAMA_URL = settings.ollama_url
 
 
-async def think(text: str):
+async def think(text: str, context: list[dict] | None = None):
     messages = [
         {
             "role": "system",
@@ -12,10 +13,13 @@ Você é o Thinking do Jarbas.
 Sua única função é identificar a intenção do usuário.
 Responda SOMENTE JSON e SEMPRE EM PORTUGUÊS,
 informalmente e pejorativamente se julgar necessário.
+Use o histórico recente apenas para entender referências,
+
+continuidade e contexto da mensagem atual.
 
 Exemplo:
 {
-    "intent": "abrir code"
+    "intent": "ta querendo abrir o code né"
 }
 """,
         },

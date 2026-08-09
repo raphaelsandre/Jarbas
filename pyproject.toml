@@ -11,4 +11,5 @@ dependencies = [
     "python-multipart",
     "faster-whisper>=1.2.1",
     "starlette>=1.6.0",
+    "aiosqlite>=0.22.1",
 ]

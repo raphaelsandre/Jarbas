@@ -1,18 +1,24 @@
 from dataclasses import dataclass
 from pydoc import text
 from typing import Any
-from fastapi import Request, APIRouter, HTTPException
+from fastapi import Request, APIRouter, HTTPException, Depends
 from starlette.datastructures import UploadFile
 
 from app.providers.speech.faster_whisper import FasterWhisperProvider
 from app.thinking.engine import think
+from app.security.auth import authenticate_request
+
 
 speech = FasterWhisperProvider()
 
 router = APIRouter(
     prefix="/input",
     tags=["gateway"],
+    dependencies=[
+        Depends(authenticate_request),
+    ],
 )
+
 
 @dataclass
 class InputFile:
@@ -29,18 +35,10 @@ class GatewayInput:
 
 
 async def parse_input(request: Request) -> GatewayInput:
-    content_type = (
-        request.headers
-        .get("content-type", "")
-        .split(";")[0]
-        .strip()
-        .lower()
-    )
+    content_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
 
     if content_type == "text/plain":
-        return GatewayInput(
-            text=(await request.body()).decode("utf-8")
-        )
+        return GatewayInput(text=(await request.body()).decode("utf-8"))
 
     if content_type == "application/json":
         body = await request.json()
@@ -57,7 +55,6 @@ async def parse_input(request: Request) -> GatewayInput:
         data: dict[str, Any] = {}
 
         for key, value in form.multi_items():
-
             if isinstance(value, UploadFile):
                 files.append(
                     InputFile(
@@ -76,9 +73,9 @@ async def parse_input(request: Request) -> GatewayInput:
             files=files or None,
         )
 
-    raise ValueError(
-        f"Unsupported content type: {content_type}"
-    )
+    raise ValueError(f"Unsupported content type: {content_type}")
+
+
 @router.post("")
 async def input_gateway(request: Request):
     parsed = await parse_input(request)
@@ -88,8 +85,7 @@ async def input_gateway(request: Request):
         text = await speech.transcribe(parsed.files[0])
     else:
         raise HTTPException(
-            status_code=400,
-            detail="Nenhuma entrada pode ser utilizada"
+            status_code=400, detail="Nenhuma entrada pode ser utilizada"
         )
     thought = await think(text)
     return thought
