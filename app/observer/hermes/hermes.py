@@ -39,7 +39,7 @@ def _append(observation: HermesObservation) -> None:
         os.close(fd)
 
 
-async def observe(request_id: str, text: str) -> None:
+async def observer(request_id: str, text: str) -> None:
     obsevation = HermesObservation(
         request_id=request_id,
         text=text,

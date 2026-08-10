@@ -4,11 +4,13 @@ from app.context.short_term import add_context, get_context
 from app.providers.speech.faster_whisper import FasterWhisperProvider
 from app.thinking.engine import think
 from app.security.auth import authenticate_request
-from app.observer.hermes import observe
+from app.observer.hermes.hermes import observer
 from uuid import uuid4
+from app.observer.hermes.reader import get_hermes_profile
+from app.handle.orchestrator import create_orchestrator
 
 speech = FasterWhisperProvider()
-
+orchestrator = create_orchestrator()
 router = APIRouter(
     prefix="/input",
     tags=["gateway"],
@@ -30,16 +32,9 @@ async def input_gateway(request: Request):
             status_code=400, detail="Nenhuma entrada pode ser utilizada"
         )
     context = await get_context()
-    await observe(
-        request_id=uuid4().hex,
-        text=text
-    )
-    thought = await think(
-        text=text,
-        context=context,
-    )
-    await add_context(user_input=text, jarbas_output=thought)
-    return {
-        "input": text,
-        "thought": thought,
-    }
+    await observer(request_id=uuid4().hex, text=text)
+    profile = get_hermes_profile()
+    intent = await think(text=text, context=context, profile=profile)
+    # await add_context(user_input=text, jarbas_output=intent)
+    result = await orchestrator.execute(intent)
+    return {"input": text, "intent": intent, "orchestrator": result}
