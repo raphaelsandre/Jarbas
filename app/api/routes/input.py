@@ -8,6 +8,13 @@ from app.observer.hermes.hermes import observer
 from uuid import uuid4
 from app.observer.hermes.reader import get_hermes_profile
 from app.handle.orchestrator import create_orchestrator
+from app.response.responder import respond
+from datetime import datetime
+
+
+def mark(label: str) -> None:
+    print(f"[{datetime.now().isoformat(timespec='seconds')}] {label}")
+
 
 speech = FasterWhisperProvider()
 orchestrator = create_orchestrator()
@@ -34,7 +41,19 @@ async def input_gateway(request: Request):
     context = await get_context()
     await observer(request_id=uuid4().hex, text=text)
     profile = get_hermes_profile()
+    mark("THINK START")
     intent = await think(text=text, context=context, profile=profile)
-    # await add_context(user_input=text, jarbas_output=intent)
+    mark("THINK DONE")
     result = await orchestrator.execute(intent)
-    return {"input": text, "intent": intent, "orchestrator": result}
+    mark("ORCHESTRATOR DONE")
+    output = await respond(
+        user_input=text, intent=intent, result=result, context=context, profile=profile
+    )
+    mark("RESPONDER DONE")
+    if output is not None:
+        await add_context(user_input=text, jarbas_output=output)
+        mark("CONTEXT DONE")
+    print("DESCONECTOU", await request.is_disconnected())
+    mark("AE CARLALHO")
+    print("Output: ", output)
+    return {"input": text, "intent": intent, "orchestrator": result, "output": output}
