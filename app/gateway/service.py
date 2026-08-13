@@ -8,22 +8,30 @@ from app.observer.hermes.reader import get_hermes_profile
 from app.context.short_term import get_context
 from fastapi import Request, HTTPException
 from app.handle.orchestrator import create_orchestrator
-from datetime import datetime   
-from app.gateway.models import GatewayResult
+from datetime import datetime
+from app.gateway.models import GatewayInput, GatewayResult
 from app.gateway.parser import parse_input
+
 
 def mark(label: str) -> None:
     print(f"[{datetime.now().isoformat(timespec='seconds')}] {label}")
 
+
 orchestrator = create_orchestrator()
 
+
 async def process_gateway_request(
-    request: Request
+    request: Request,
 ) -> GatewayResult:
+    gateway_input = await parse_input(request)
+    return await process_gateway_input(gateway_input)
+
+
+async def process_gateway_input(gateway_input: GatewayInput) -> GatewayResult:
     """
     Process the input received from the gateway and return the result.
     """
-    gateway_input= await parse_input(request)
+    print(gateway_input)
     if gateway_input.text is not None:
         text = gateway_input.text
     elif gateway_input.files:
@@ -47,7 +55,6 @@ async def process_gateway_request(
     if output is not None:
         await add_context(user_input=text, jarbas_output=output)
         mark("CONTEXT DONE")
-    print("DESCONECTOU", await request.is_disconnected())
     mark("AE CARLALHO")
     print("Output: ", output)
-    return {"input": text, "intent": intent, "orchestrator": result, "output": output}
+    return GatewayResult(input=text, output=output, intent=intent)
