@@ -1,8 +1,9 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.gateway.websocket.manager import websocket_connection_manager
-from gateway.websocket.models import WebSocketClientEvent, WebSocketServerEvent
+from app.gateway.websocket.models import WebSocketClientEvent, WebSocketServerEvent
 
 router = APIRouter()
+
 
 @router.websocket("/ws")
 async def websocket_router(websocket: WebSocket) -> None:
@@ -13,12 +14,10 @@ async def websocket_router(websocket: WebSocket) -> None:
             event = WebSocketClientEvent.model_validate(payload)
             if event.type == "ping":
                 response = WebSocketServerEvent(
-                    type="pong",
-                    message="Jarbas websocket is COMENDO A PORRA TODA"
+                    type="pong", message="Beleza meu patrao?"
                 )
                 await websocket_connection_manager.send_json(
-                    websocket,
-                    response.model_dump()
+                    websocket, response.model_dump()
                 )
     except WebSocketDisconnect:
         websocket_connection_manager.disconnect(websocket)
