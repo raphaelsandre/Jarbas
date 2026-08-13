@@ -1,10 +1,6 @@
-import httpx
+from app.shared.llm.client import llm_client
 
-from app.config import settings
-
-
-OLLAMA_URL = settings.ollama_url
-OLLAMA_MODEL = settings.ollama_model
+llm = llm_client
 
 
 async def generate_answer(
@@ -24,7 +20,6 @@ async def generate_answer(
             ),
         }
     ]
-
     if profile is not None:
         messages.append(
             {
@@ -33,45 +28,23 @@ async def generate_answer(
             }
         )
 
-    if context:
-        messages.extend(context)
+    for interaction in context[-2:]:
+        if interaction.get("user"):
+            messages.append(
+                {
+                    "role": "user",
+                    "content": interaction["user"],
+                }
+            )
 
-    messages.append(
-        {
-            "role": "user",
-            "content": user_input,
-        }
-    )
+        if interaction.get("jarbas"):
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": interaction["jarbas"],
+                }
+            )
 
-    timeout = httpx.Timeout(
-        connect=5.0,
-        read=180.0,
-        write=10.0,
-        pool=5.0,
-    )
+    response = await llm.chat(messages)
 
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        response = await client.post(
-            f"{OLLAMA_URL}/api/chat",
-            json={
-                "model": OLLAMA_MODEL,
-                "messages": messages,
-                "stream": False,
-                "keep_alive": "30m",
-                "options": {
-                    "temperature": 0.7,
-                },
-            },
-        )
-
-        if response.is_error:
-            print("=== OLLAMA RESPONSE ERROR ===")
-            print("status:", response.status_code)
-            print("body:", response.text)
-            print("headers:", dict(response.headers))
-
-        response.raise_for_status()
-
-    payload = response.json()
-
-    return payload["message"]["content"]
+    return response

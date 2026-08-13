@@ -1,16 +1,12 @@
-import httpx
-from app.config import settings
 from app.thinking.models import ThinkingProfile
 from .parser import parse_intent
-from app.config import settings
-
-OLLAMA_URL = settings.ollama_url
-
+from app.shared.llm.client import llm_client
+llm = llm_client
 
 async def think(
     text: str,
     context: list[dict] | None = None,
-    profile: ThinkingProfile | None = None,
+    profile: ThinkingProfile | None = None
 ):
     messages = [
         {
@@ -64,47 +60,8 @@ Regras:
             }
         )
     messages.append({"role": "user", "content": text})
-    timeout = httpx.Timeout(
-        connect=settings.ollama_connect_timeout,
-        read=settings.ollama_read_timeout,
-        write=settings.ollama_write_timeout,
-        pool=settings.ollama_pool_timeout,
-    )
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        response = await client.post(
-            f"{OLLAMA_URL}/api/chat",
-            json={
-                "model": settings.ollama_model,
-                "messages": messages,
-                "stream": False,
-                "format": "json",
-                "options": {
-                    "temperature": 0.7,
-                },
-            },
-        )
-    response.raise_for_status()
+    response = await llm.chat(messages)
+    result = parse_intent(response)
+    print(result)
+    return result
 
-    payload = response.json()
-
-    content = payload["message"]["content"]
-    for key in (
-        "total_duration",
-        "load_duration",
-        "prompt_eval_duration",
-        "eval_duration",
-        "prompt_eval_count",
-        "eval_count",
-    ):
-        print(key, payload.get(key))
-    data = response.json()
-
-    print("=== OLLAMA RAW ===")
-    print(data)
-
-    print("=== THINKING ===")
-    print(data.get("message", {}).get("thinking"))
-
-    print("=== CONTENT ===")
-    print(data.get("message", {}).get("content"))
-    return parse_intent(content)

@@ -21,9 +21,9 @@ orchestrator = create_orchestrator()
 router = APIRouter(
     prefix="/input",
     tags=["gateway"],
-    dependencies=[
-        Depends(authenticate_request),
-    ],
+    # dependencies=[
+    #   Depends(authenticate_request),
+    # ],
 )
 
 

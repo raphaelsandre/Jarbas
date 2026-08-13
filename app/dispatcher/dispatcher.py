@@ -3,7 +3,7 @@ from unittest import result
 from .models.tool_request import ToolRequest
 from .models.tool_response import ToolResponse
 from .registry.tool_registry import ToolRegistry
-
+from .exceptions import ToolNotFoundError, ToolExecutionError
 class Dispatcher:
     """
     Responsavel por localizar e executar ferramentas
@@ -29,7 +29,6 @@ class Dispatcher:
                 data=result.output
             )
         except Exception as exc:
-            return ToolResponse(
-                success=False,
-                error=str(exc)
+            raise ToolExecutionError(
+                str(exc)
             )
