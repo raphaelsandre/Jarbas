@@ -1,8 +1,9 @@
 import aiosqlite
-
+from app.config import settings
 
 DB_PATH = "jarbas.db"
-MAX_CONTEXT = 20
+MAX_CONTEXT = 3
+model: str = settings.ollama_model
 
 
 async def init_context() -> None:
@@ -10,6 +11,7 @@ async def init_context() -> None:
         await db.execute("""
             CREATE TABLE IF NOT EXISTS context (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                model TEXT NOT NULL,
                 user_input TEXT NOT NULL,
                 jarbas_output TEXT NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -26,12 +28,14 @@ async def add_context(
         await db.execute(
             """
             INSERT INTO context (
+                model,
                 user_input,
                 jarbas_output
             )
-            VALUES (?, ?)
+            VALUES (?, ?, ?)
             """,
-            (
+            (  
+                model,
                 user_input,
                 jarbas_output,
             ),
