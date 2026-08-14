@@ -1,7 +1,7 @@
 from app.thinking.models import Intent
 from dataclasses import dataclass
+from pydantic import BaseModel, ConfigDict
 from typing import Any
-
 
 @dataclass(frozen=True)
 class InputFile:
@@ -10,14 +10,14 @@ class InputFile:
     content: bytes
 
 
-@dataclass(frozen=True)
-class GatewayInput:
+class GatewayInput(BaseModel):
+    model_config = ConfigDict(frozen=True)
     text: str | None = None
     data: dict[str, Any] | None = None
     files: list[InputFile] | None = None
 
-@dataclass(frozen=True)
-class GatewayResult:
+class GatewayResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
     input: str
     intent: Intent
     output: str | None = None
