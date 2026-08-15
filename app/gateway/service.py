@@ -6,11 +6,10 @@ from app.response.responder import respond
 from app.thinking.engine import think
 from app.observer.hermes.reader import get_hermes_profile
 from app.context.short_term import get_context
-from fastapi import Request, HTTPException
+from fastapi import HTTPException
 from app.handle.orchestrator import create_orchestrator
 from datetime import datetime
 from app.gateway.models import GatewayInput, GatewayResult
-from app.gateway.parser import parse_input
 
 
 def mark(label: str) -> None:
@@ -18,13 +17,6 @@ def mark(label: str) -> None:
 
 
 orchestrator = create_orchestrator()
-
-
-async def process_gateway_request(
-    request: Request,
-) -> GatewayResult:
-    gateway_input = await parse_input(request)
-    return await process_gateway_input(gateway_input)
 
 
 async def process_gateway_input(gateway_input: GatewayInput) -> GatewayResult:

@@ -18,7 +18,7 @@ class Interaction(BaseModel):
     id: UUID
     status: InteractionStatus
 
-    input: GatewayInput | None = None
+    input: GatewayInput
     result: GatewayResult | None = None
     error: str | None = None
     started_at: datetime | None = None

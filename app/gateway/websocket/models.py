@@ -9,5 +9,5 @@ class WebSocketClientEvent(BaseModel):
 
 
 class WebSocketServerEvent(BaseModel):
-    type: Literal["pong"]
+    type: Literal["pong", "error"]
     message: str

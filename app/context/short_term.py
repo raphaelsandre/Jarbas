@@ -1,13 +1,14 @@
-import aiosqlite
-from app.config import settings
+from aiosqlite import Connection
 
-DB_PATH = "jarbas.db"
+from app.config import settings
+from app.database.connection import get_database_connection
+
 MAX_CONTEXT = 3
 model: str = settings.ollama_model
 
 
 async def init_context() -> None:
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_database_connection() as db:
         await db.execute("""
             CREATE TABLE IF NOT EXISTS context (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,13 +19,12 @@ async def init_context() -> None:
             )
         """)
 
-        await db.commit()
 
 async def add_context(
     user_input: str,
     jarbas_output: str,
 ) -> None:
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_database_connection() as db:
         await db.execute(
             """
             INSERT INTO context (
@@ -34,7 +34,7 @@ async def add_context(
             )
             VALUES (?, ?, ?)
             """,
-            (  
+            (
                 model,
                 user_input,
                 jarbas_output,
@@ -53,11 +53,10 @@ async def add_context(
             (MAX_CONTEXT,),
         )
         await trim_context(db)
-        await db.commit()
+
 
 async def get_context() -> list[dict]:
-  async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_database_connection() as db:
         cursor = await db.execute(
             """
             SELECT
@@ -74,10 +73,10 @@ async def get_context() -> list[dict]:
                 "jarbas": row["jarbas_output"],
             }
             for row in rows
-
         ]
 
-async def trim_context(db) -> None:
+
+async def trim_context(db: Connection) -> None:
     cursor = await db.execute(
         "SELECT COUNT(*) FROM context"
     )
@@ -97,7 +96,7 @@ async def trim_context(db) -> None:
         (excess,),
     )
 
+
 async def clear_context() -> None:
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_database_connection() as db:
         await db.execute("DELETE FROM context")
-        await db.commit()
