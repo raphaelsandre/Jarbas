@@ -7,7 +7,7 @@ from app.thinking.engine import think
 from app.observer.hermes.reader import get_hermes_profile
 from app.context.short_term import get_context
 from fastapi import HTTPException
-from app.handle.orchestrator import create_orchestrator
+from app.handle.orchestrator import orchestrator
 from datetime import datetime
 from app.gateway.models import GatewayInput, GatewayResult
 
@@ -16,7 +16,6 @@ def mark(label: str) -> None:
     print(f"[{datetime.now().isoformat(timespec='seconds')}] {label}")
 
 
-orchestrator = create_orchestrator()
 
 
 async def process_gateway_input(gateway_input: GatewayInput) -> GatewayResult:
@@ -32,7 +31,9 @@ async def process_gateway_input(gateway_input: GatewayInput) -> GatewayResult:
         raise HTTPException(
             status_code=400, detail="Nenhuma entrada pode ser utilizada"
         )
-    context = await get_context()
+    metadata = gateway_input.data or {}
+    context_scope = str(metadata.get("client_id") or "default")[:128]
+    context = await get_context(scope=context_scope)
     await observer(request_id=uuid4().hex, text=text)
     profile = get_hermes_profile()
     mark("THINK START")
@@ -45,8 +46,9 @@ async def process_gateway_input(gateway_input: GatewayInput) -> GatewayResult:
     )
     mark("RESPONDER DONE")
     if output is not None:
-        await add_context(user_input=text, jarbas_output=output)
+        await add_context(
+            user_input=text, jarbas_output=output, scope=context_scope
+        )
         mark("CONTEXT DONE")
-    mark("AE CARLALHO")
     print("Output: ", output)
     return GatewayResult(input=text, output=output, intent=intent)
