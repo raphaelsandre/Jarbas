@@ -8,27 +8,25 @@ async def generate_answer(
     context: list[dict] | None = None,
     profile=None,
 ) -> str:
+    system_content = (
+        "Você é Jarbas, um assistente pessoal. "
+        "Responda ao usuário de forma natural. "
+        "Não classifique intenções. "
+        "Não retorne JSON. "
+        "Retorne somente a resposta."
+    )
+
+    if profile is not None:
+        system_content += f"\n\nPerfil do usuário:\n{profile}"
+
     messages: list[dict] = [
         {
             "role": "system",
-            "content": (
-                "Você é Jarbas, um assistente pessoal. "
-                "Responda ao usuário de forma natural, útil e direta. "
-                "Não classifique intenções. "
-                "Não retorne JSON. "
-                "Retorne somente a resposta destinada ao usuário."
-            ),
+            "content": system_content,
         }
     ]
-    if profile is not None:
-        messages.append(
-            {
-                "role": "system",
-                "content": f"Perfil do usuário:\n{profile}",
-            }
-        )
 
-    for interaction in context[-2:]:
+    for interaction in (context or [])[-2:]:
         if interaction.get("user"):
             messages.append(
                 {
@@ -45,6 +43,13 @@ async def generate_answer(
                 }
             )
 
-    response = await llm.chat(messages)
+    messages.append(
+        {
+            "role": "user",
+            "content": user_input,
+        }
+    )
+
+    response = await llm.chat(messages, json_mode=False)
 
     return response

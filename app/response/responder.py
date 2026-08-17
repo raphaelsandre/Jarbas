@@ -22,11 +22,15 @@ async def respond(
                 context=context,
                 profile=profile,
             )
-
         except httpx.HTTPStatusError as exc:
             print("RESPONDER HTTP ERROR:", exc)
-
             return None
+
+    if result.response_hint == "tool_response":
+        response = result.data.get("response") or result.data.get("message")
+        if response is not None:
+            return str(response)
+        return "A tool foi executada com sucesso."
 
     if result.response_hint == "unsupported_intent":
         return "Ainda não sei como lidar com esse pedido."
